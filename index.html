@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DoorPath | Last Mile Navigation</title>
+
+<!-- Leaflet map library -->
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#07111f;
+    color:white;
+}
+
+/* NAVBAR */
+
+nav{
+    height:65px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 5%;
+    border-bottom:1px solid #263247;
+}
+
+.logo{
+    font-size:23px;
+    font-weight:bold;
+}
+
+.logo span{
+    color:#65e6b0;
+}
+
+.gps-status{
+    font-size:13px;
+    color:#65e6b0;
+}
+
+/* MAIN */
+
+.container{
+    max-width:1250px;
+    margin:auto;
+    padding:25px;
+}
+
+.header{
+    margin-bottom:20px;
+}
+
+.header h1{
+    font-size:30px;
+    margin-bottom:8px;
+}
+
+.header p{
+    color:#9ba7ba;
+}
+
+/* MAP */
+
+.map-container{
+    position:relative;
+    height:500px;
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid #263247;
+}
+
+#map{
+    width:100%;
+    height:100%;
+}
+
+/* MAP CONTROLS */
+
+.map-controls{
+    position:absolute;
+    top:15px;
+    right:15px;
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.map-controls button{
+    border:none;
+    padding:12px 15px;
+    border-radius:10px;
+    background:#101b2d;
+    color:white;
+    cursor:pointer;
+    border:1px solid #33435d;
+}
+
+.map-controls button:hover{
+    background:#182940;
+}
+
+/* DELIVERY CARD */
+
+.delivery-card{
+    margin-top:20px;
+    background:#101b2d;
+    border:1px solid #263247;
+    border-radius:18px;
+    padding:22px;
+}
+
+.delivery-header{
+    display:flex;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.order{
+    color:#65e6b0;
+    font-size:13px;
+}
+
+.address{
+    font-size:20px;
+    margin-top:5px;
+}
+
+.eta{
+    text-align:right;
+}
+
+.eta strong{
+    font-size:24px;
+}
+
+/* VISUAL MODE */
+
+.visual{
+    margin-top:20px;
+    background:#0d1727;
+    border-radius:18px;
+    border:1px solid #263247;
+    padding:22px;
+}
+
+.visual h2{
+    margin-bottom:18px;
+}
+
+.route{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+}
+
+.step{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    min-height:70px;
+}
+
+.icon{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#17263c;
+    font-size:22px;
+    flex-shrink:0;
+}
+
+.line{
+    height:30px;
+    width:2px;
+    background:#3b4b62;
+    margin-left:21px;
+}
+
+.step-info h3{
+    font-size:15px;
+}
+
+.step-info p{
+    color:#9ba7ba;
+    font-size:13px;
+    margin-top:4px;
+}
+
+/* FLOOR VISUAL */
+
+.floor{
+    margin-top:20px;
+    background:#121f33;
+    padding:20px;
+    border-radius:15px;
+}
+
+.floor-map{
+    margin-top:15px;
+    height:210px;
+    position:relative;
+    border:2px solid #41536d;
+    background:#17263b;
+    border-radius:10px;
+}
+
+.lift{
+    position:absolute;
+    left:20px;
+    top:20px;
+    width:65px;
+    height:55px;
+    background:#293b55;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+}
+
+.corridor{
+    position:absolute;
+    left:85px;
+    top:43px;
+    width:180px;
+    height:18px;
+    background:#354963;
+}
+
+.flat{
+    position:absolute;
+    right:20px;
+    top:25px;
+    width:85px;
+    height:70px;
+    border:2px solid #65e6b0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:7px;
+    color:#65e6b0;
+}
+
+.stairs{
+    position:absolute;
+    left:20px;
+    bottom:25px;
+    width:65px;
+    height:55px;
+    background:#293b55;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+}
+
+.arrow{
+    position:absolute;
+    top:95px;
+    left:170px;
+    font-size:28px;
+    color:#65e6b0;
+}
+
+/* ACTION */
+
+.actions{
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+}
+
+button.primary{
+    background:#65e6b0;
+    color:#07111f;
+    border:none;
+    padding:14px 20px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button.secondary{
+    background:#17263b;
+    color:white;
+    border:1px solid #33435d;
+    padding:14px 20px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+    .container{
+        padding:15px;
+    }
+
+    .map-container{
+        height:420px;
+    }
+
+    .delivery-header{
+        flex-direction:column;
+    }
+
+    .eta{
+        text-align:left;
+    }
+
+    .actions{
+        flex-direction:column;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+
+    <div class="logo">
+        🚪 Door<span>Path</span>
+    </div>
+
+    <div class="gps-status" id="gpsStatus">
+        ● GPS Ready
+    </div>
+
+</nav>
+
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>Final 50m Navigation</h1>
+
+        <p>
+            Navigate from anywhere on Earth to the exact delivery door.
+        </p>
+
+    </div>
+
+
+    <!-- MAP -->
+
+    <div class="map-container">
+
+        <div id="map"></div>
+
+        <div class="map-controls">
+
+            <button id="locateBtn">
+                📍 My Location
+            </button>
+
+            <button id="visualBtn">
+                👁 Visual Mode
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- DELIVERY -->
+
+    <div class="delivery-card">
+
+        <div class="delivery-header">
+
+            <div>
+
+                <div class="order">
+                    DELIVERY #48291
+                </div>
+
+                <div class="address">
+                    ABC Residency, Tower B
+                </div>
+
+                <p style="color:#9ba7ba;margin-top:5px">
+                    Flat 704 • 7th Floor
+                </p>
+
+            </div>
+
+            <div class="eta">
+
+                <p style="color:#9ba7ba">
+                    Estimated arrival
+                </p>
+
+                <strong id="eta">
+                    8 min
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button class="primary" id="startBtn">
+                ▶️ Start Navigation
+            </button>
+
+            <button class="secondary" id="shareBtn">
+                📲 Customer Instructions
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- VISUAL MODE -->
+
+    <div class="visual" id="visualPanel">
+
+        <h2>👁 Visual Delivery Path</h2>
+
+        <div class="route">
+
+            <div class="step">
+
+                <div class="icon">📍</div>
+
+                <div class="step-info">
+
+                    <h3>You are outside the building</h3>
+
+                    <p>
+                        Continue 18 metres toward Gate 2.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="line"></div>
+
+
+            <div class="step">
+
+                <div class="icon">🚪</div>
+
+                <div class="step-info">
+
+                    <h3>Enter through Gate 2</h3>
+
+                    <p>
+                        Gate 2 is beside the security cabin.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="line"></div>
+
+
+            <div class="step">
+
+                <div class="icon">🛗</div>
+
+                <div class="step-info">
+
+                    <h3>Take Lift B</h3>
+
+                    <p>
+                        Lift B is on your right after entering.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="line"></div>
+
+
+            <div class="step">
+
+                <div class="icon">7️⃣</div>
+
+                <div class="step-info">
+
+                    <h3>Go to Floor 7</h3>
+
+                    <p>
+                        Press 7 inside the lift.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="line"></div>
+
+
+            <div class="step">
+
+                <div class="icon">➡️</div>
+
+                <div class="step-info">
+
+                    <h3>Turn right</h3>
+
+                    <p>
+                        Exit the lift and turn right.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="line"></div>
+
+
+            <div class="step">
+
+                <div class="icon">🏠</div>
+
+                <div class="step-info">
+
+                    <h3>Flat 704</h3>
+
+                    <p>
+                        Blue door, opposite the fire extinguisher.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- BUILDING VISUAL -->
+
+        <div class="floor">
+
+            <h3>🏢 Floor 7 Visual Guide</h3>
+
+            <p style="color:#9ba7ba;margin-top:5px">
+                Follow the highlighted path to Flat 704.
+            </p>
+
+            <div class="floor-map">
+
+                <div class="lift">
+                    🛗 Lift B
+                </div>
+
+                <div class="corridor"></div>
+
+                <div class="flat">
+                    🚪 704
+                </div>
+
+                <div class="stairs">
+                    🪜 Stairs
+                </div>
+
+                <div class="arrow">
+                    ➜
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- LEAFLET -->
+
+<script
+src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+/*
+    DEMO DESTINATION
+
+    Replace these coordinates with the actual
+    customer's delivery coordinates.
+*/
+
+const destination = [
+    31.2547,
+    75.7056
+];
+
+
+/* CREATE MAP */
+
+const map = L.map('map').setView(destination, 17);
+
+
+/* OPENSTREETMAP */
+
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+        maxZoom:19,
+        attribution:'©️ OpenStreetMap contributors'
+    }
+).addTo(map);
+
+
+/* DESTINATION */
+
+const destinationMarker = L.marker(destination)
+    .addTo(map)
+    .bindPopup(
+        "<b>📦 Delivery Destination</b><br>ABC Residency<br>Flat 704"
+    )
+    .openPopup();
+
+
+/* CUSTOMER BUILDING CIRCLE */
+
+L.circle(
+    destination,
+    {
+        radius:40,
+        color:'#65e6b0',
+        fillColor:'#65e6b0',
+        fillOpacity:0.15
+    }
+).addTo(map);
+
+
+/* RIDER LOCATION */
+
+let riderMarker = null;
+
+
+/* GPS FUNCTION */
+
+function locateRider(){
+
+    const status =
+        document.getElementById("gpsStatus");
+
+    if(!navigator.geolocation){
+
+        status.innerText =
+            "● GPS unavailable";
+
+        return;
+
+    }
+
+    status.innerText =
+        "● Finding location...";
+
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position){
+
+            const lat =
+                position.coords.latitude;
+
+            const lon =
+                position.coords.longitude;
+
+
+            if(riderMarker){
+
+                riderMarker.setLatLng([
+                    lat,
+                    lon
+                ]);
+
+            }else{
+
+                riderMarker = L.marker([
+                    lat,
+                    lon
+                ])
+                .addTo(map)
+                .bindPopup(
+                    "<b>🚴 You are here</b>"
+                );
+
+            }
+
+
+            map.setView(
+                [lat,lon],
+                17
+            );
+
+
+            status.innerText =
+                "● GPS Connected";
+
+        },
+
+        function(error){
+
+            status.innerText =
+                "● GPS permission required";
+
+            alert(
+                "Please allow location access to use live rider GPS."
+            );
+
+        },
+
+        {
+            enableHighAccuracy:true,
+            timeout:10000
+        }
+
+    );
+
+}
+
+
+/* LOCATION BUTTON */
+
+document
+.getElementById("locateBtn")
+.addEventListener(
+    "click",
+    locateRider
+);
+
+
+/* VISUAL MODE */
+
+document
+.getElementById("visualBtn")
+.addEventListener(
+    "click",
+    function(){
+
+        document
+        .getElementById("visualPanel")
+        .scrollIntoView({
+            behavior:"smooth"
+        });
+
+    }
+);
+
+
+/* START NAVIGATION */
+
+document
+.getElementById("startBtn")
+.addEventListener(
+    "click",
+    function(){
+
+        locateRider();
+
+        alert(
+            "Navigation started! Follow the route to Gate 2, then switch to Visual Mode for indoor navigation."
+        );
+
+    }
+);
+
+
+/* CUSTOMER INSTRUCTIONS */
+
+document
+.getElementById("shareBtn")
+.addEventListener(
+    "click",
+    function(){
+
+        alert(
+            "Customer instructions:\n\nGate 2 → Lift B → Floor 7 → Right → Flat 704\n\nBlue door opposite the fire extinguisher."
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
